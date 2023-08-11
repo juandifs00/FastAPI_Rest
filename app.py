@@ -1,58 +1,95 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from typing import Text, Optional
-from datetime import datetime
+from pydantic import BaseModel
+from typing import List, Optional
 from uuid import uuid4
 
 app = FastAPI()
 
-posts = []
-
-# Post Model
-class Post(BaseModel):
+class Vehiculo(BaseModel):
     id: Optional[str] = None
-    title: str
-    author: str
-    content: Text
-    created_at: datetime = Field(default_factory=datetime.now)
-    published_at: Optional[datetime] = None
-    published: bool = False
+    marca: str
+    cilindraje: int
+    combustible: str
+    año: int
 
-@app.get('/')
-def read_root():
-    return{'welcome: Welcome to my REST API'}
+class Concesionario(BaseModel):
+    id: Optional[str] = None
+    vehiculos: List[Vehiculo] = []
+    tipo_vehiculo: str
+    tipo_combustible: str
+    estado_vehiculo: str
 
-@app.get('/posts')
-def get_posts():
-    return posts
+vehiculos = []
+concesionarios = []
 
-@app.post('/posts')
-def save_post(post:Post):
-    post.id = str(uuid4())
-    posts.append(post.model_dump())
-    return posts[-1]
+#Vehiculos
 
-@app.get('/posts/{post_id}')
-def get_posts(post_id: str):
-    for post in posts:
-        if post['id'] == post_id:
-            return post
-    raise HTTPException(status_code=404, detail="Post Not Found")
+@app.post('/vehiculos/')
+def crear_vehiculo(vehiculo: Vehiculo):
+    vehiculo.id = str(uuid4())
+    vehiculos.append(vehiculo)
+    return vehiculo
 
-@app.delete('/posts/{post_id}')
-def delete_post(post_id: str):
-    for index, post in enumerate(posts):
-        if post['id'] == post_id:
-            posts.pop(index)
-            return {"message": "Post has been deleted succesfully"}
-    raise HTTPException(status_code=404, detail="Post Not Found")
+@app.get('/vehiculos/')
+def obtener_vehiculos():
+    return vehiculos
 
-@app.put('/posts/{post_id}')
-def update_post(post_id: str, updatePost: Post):
-    for index, post in enumerate(posts):
-        if post['id'] == post_id:
-            posts[index]['title'] = updatePost.title
-            posts[index]['content'] = updatePost.content
-            posts[index]['author'] = updatePost.author
-            return {"message": "Post has been updated succesfully"}
-    raise HTTPException(status_code=404, detail="Post Not Found")
+@app.get('/vehiculos/{vehiculo_id}')
+def obtener_vehiculo(vehiculo_id: str):
+    for vehiculo in vehiculos:
+        if vehiculo.id == vehiculo_id:
+            return vehiculo
+    raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
+
+@app.put('/vehiculos/{vehiculo_id}')
+def actualizar_vehiculo(vehiculo_id: str, vehiculo_actualizado: Vehiculo):
+    for index, vehiculo in enumerate(vehiculos):
+        if vehiculo.id == vehiculo_id:
+            vehiculos[index] = vehiculo_actualizado
+            vehiculos[index].id = vehiculo_id
+            return {"message": "Vehiculo actualizado exitosamente"}
+    raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
+
+@app.delete('/vehiculos/{vehiculo_id}')
+def eliminar_vehiculo(vehiculo_id: str):
+    for index, vehiculo in enumerate(vehiculos):
+        if vehiculo.id == vehiculo_id:
+            vehiculos.pop(index)
+            return {"message": "Vehiculo eliminado exitosamente"}
+    raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
+
+#Concesionarios
+
+@app.post('/concesionarios/')
+def crear_concesionario(concesionario: Concesionario):
+    concesionario.id = str(uuid4())
+    concesionarios.append(concesionario)
+    return concesionario
+
+@app.get('/concesionarios/')
+def obtener_concesionarios():
+    return concesionarios
+
+@app.get('/concesionarios/{concesionario_id}')
+def obtener_concesionario(concesionario_id: str):
+    for concesionario in concesionarios:
+        if concesionario.id == concesionario_id:
+            return concesionario
+    raise HTTPException(status_code=404, detail="Concesionario no encontrado")
+
+@app.put('/concesionarios/{concesionario_id}')
+def actualizar_concesionario(concesionario_id: str, concesionario_actualizado: Concesionario):
+    for index, concesionario in enumerate(concesionarios):
+        if concesionario.id == concesionario_id:
+            concesionarios[index] = concesionario_actualizado
+            concesionarios[index].id = concesionario_id
+            return {"message": "Concesionario actualizado exitosamente"}
+    raise HTTPException(status_code=404, detail="Concesionario no encontrado")
+
+@app.delete('/concesionarios/{concesionario_id}')
+def eliminar_concesionario(concesionario_id: str):
+    for index, concesionario in enumerate(concesionarios):
+        if concesionario.id == concesionario_id:
+            concesionarios.pop(index)
+            return {"message": "Concesionario eliminado exitosamente"}
+    raise HTTPException(status_code=404, detail="Concesionario no encontrado")
