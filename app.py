@@ -11,6 +11,9 @@ class Vehiculo(BaseModel):
     cilindraje: int
     combustible: str
     año: int
+    '''
+    concesionario_id: Optional[str] = None
+    '''
 
 class Concesionario(BaseModel):
     id: Optional[str] = None
@@ -22,13 +25,17 @@ class Concesionario(BaseModel):
 vehiculos = []
 concesionarios = []
 
+@app.get('/')
+def read_root():
+    return {'Welcome': 'Welcome to my REST API'}
+
 #Vehiculos
 
 @app.post('/vehiculos/')
 def crear_vehiculo(vehiculo: Vehiculo):
     vehiculo.id = str(uuid4())
     vehiculos.append(vehiculo)
-    return vehiculo
+    return {'message' : f'El vehiculo {vehiculo.marca}, con cilindraje {vehiculo.cilindraje} del año {vehiculo.año} y con combustible {vehiculo.combustible} ha sido creado exitosamente'}
 
 @app.get('/vehiculos/')
 def obtener_vehiculos():
@@ -65,6 +72,20 @@ def crear_concesionario(concesionario: Concesionario):
     concesionario.id = str(uuid4())
     concesionarios.append(concesionario)
     return concesionario
+
+'''
+@app.post('/concesionarios/{concesionario_id}/agregar_vehiculo/')
+def agregar_vehiculo_a_concesionario(concesionario_id: str, vehiculo_id: str):
+    for concesionario in concesionarios:
+        if concesionario.id == concesionario_id:
+            for vehiculo in vehiculos:
+                if vehiculo.id == vehiculo_id:
+                    vehiculo.concesionario_id = concesionario.id
+                    concesionario.vehiculos.append(vehiculo)
+                    return {'message': 'Vehiculo agregado al concesionario exitosamente'}
+            raise HTTPException(status_code=404, detail='Vehiculo no encontrado')
+    raise HTTPException(status_code=404, detail='Concesionario no encontrado')
+'''
 
 @app.get('/concesionarios/')
 def obtener_concesionarios():
