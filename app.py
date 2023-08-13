@@ -11,13 +11,10 @@ class Vehiculo(BaseModel):
     cilindraje: int
     combustible: str
     año: int
-    '''
-    concesionario_id: Optional[str] = None
-    '''
 
 class Concesionario(BaseModel):
     id: Optional[str] = None
-    vehiculos: List[Vehiculo] = []
+    idVehiculo: Optional[str] = None
     tipo_vehiculo: str
     tipo_combustible: str
     estado_vehiculo: str
@@ -73,19 +70,6 @@ def crear_concesionario(concesionario: Concesionario):
     concesionarios.append(concesionario)
     return concesionario
 
-'''
-@app.post('/concesionarios/{concesionario_id}/agregar_vehiculo/')
-def agregar_vehiculo_a_concesionario(concesionario_id: str, vehiculo_id: str):
-    for concesionario in concesionarios:
-        if concesionario.id == concesionario_id:
-            for vehiculo in vehiculos:
-                if vehiculo.id == vehiculo_id:
-                    vehiculo.concesionario_id = concesionario.id
-                    concesionario.vehiculos.append(vehiculo)
-                    return {'message': 'Vehiculo agregado al concesionario exitosamente'}
-            raise HTTPException(status_code=404, detail='Vehiculo no encontrado')
-    raise HTTPException(status_code=404, detail='Concesionario no encontrado')
-'''
 
 @app.get('/concesionarios/')
 def obtener_concesionarios():
