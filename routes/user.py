@@ -1,4 +1,5 @@
-from fastapi import HTTPException, APIRouter
+from fastapi import APIRouter, Response, status
+from starlette.status import HTTP_204_NO_CONTENT
 from config.db import conn
 from uuid import uuid4
 from models.user import Vehiculo, Concesionario
@@ -6,50 +7,38 @@ from schemas.user import Vehiculos, Concesionarios
 
 user = APIRouter()
 
-@user.get('/users')
-def get_data():
+@user.get('/users', response_model=list[Vehiculos], tags=['Vehiculos'])
+def obtener_vehiculos():
     return conn.execute(Vehiculo.select()).fetchall()
 
 #Vehiculos model_dump()
 
-@user.post('/vehiculos/')
+@user.post('/vehiculos/', response_model=Vehiculos, tags=['Vehiculos'])
 def crear_vehiculo(vehiculo: Vehiculos):
     nuevo_vehiuclo = {"marca":vehiculo.marca, "cilindraje":vehiculo.cilindraje, "combustible":vehiculo.combustible, "ano":vehiculo.ano}
     nuevo_vehiuclo["id"] = str(uuid4())
     result = conn.execute(Vehiculo.insert().values(nuevo_vehiuclo))
-    print(result)
+    print(result.lastrowid)
+    #return conn.execute(Vehiculo.select().where(Vehiculo.c.id == result.lastrowid)).first()
     return "Vehiculo insertado correctamente"
 
+@user.get('/vehiculos/{vehiculo_id}', response_model=Vehiculos, tags=['Vehiculos'])
+def obtener_vehiculo(vehiculo_id: str):
+    return conn.execute(Vehiculo.select().where(Vehiculo.c.id == vehiculo_id)).first()
+
+@user.delete('/vehiculos/{vehiculo_id}', status_code=status.HTTP_204_NO_CONTENT, tags=['Vehiculos'])
+def eliminar_vehiculo(vehiculo_id: str):
+    conn.execute(Vehiculo.delete().where(Vehiculo.c.id == vehiculo_id))
+    return Response(status_code=HTTP_204_NO_CONTENT)
+
+@user.put('/vehiculos/{vehiculo_id}', response_model=Vehiculos, tags=['Vehiculos'])
+def actualizar_vehiculo(vehiculo_id: str, vehiculo: Vehiculos):
+    conn.execute(Vehiculo.update().values(marca = vehiculo.marca, cilindraje = vehiculo.cilindraje, 
+                                          combustible = vehiculo.combustible, 
+                                          ano = vehiculo.ano).where(Vehiculo.c.id == vehiculo_id))
+    return conn.execute(Vehiculo.select().where(Vehiculo.c.id == vehiculo_id)).first()
 
 '''
-@user.get('/vehiculos/')
-def obtener_vehiculos():
-    return vehiculos
-
-@user.get('/vehiculos/{vehiculo_id}')
-def obtener_vehiculo(vehiculo_id: str):
-    for vehiculo in vehiculos:
-        if vehiculo.id == vehiculo_id:
-            return vehiculo
-    raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
-
-@user.put('/vehiculos/{vehiculo_id}')
-def actualizar_vehiculo(vehiculo_id: str, vehiculo_actualizado: Vehiculo):
-    for index, vehiculo in enumerate(vehiculos):
-        if vehiculo.id == vehiculo_id:
-            vehiculos[index] = vehiculo_actualizado
-            vehiculos[index].id = vehiculo_id
-            return {"message": "Vehiculo actualizado exitosamente"}
-    raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
-
-@user.delete('/vehiculos/{vehiculo_id}')
-def eliminar_vehiculo(vehiculo_id: str):
-    for index, vehiculo in enumerate(vehiculos):
-        if vehiculo.id == vehiculo_id:
-            vehiculos.pop(index)
-            return {"message": "Vehiculo eliminado exitosamente"}
-    raise HTTPException(status_code=404, detail="Vehiculo no encontrado")
-
 #Concesionarios
 
 @user.post('/concesionarios/')
