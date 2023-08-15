@@ -1,41 +1,27 @@
 from fastapi import HTTPException, APIRouter
-from pydantic import BaseModel
-from typing import Optional
-from uuid import uuid4
 from config.db import conn
+from uuid import uuid4
 from models.user import Vehiculo, Concesionario
+from schemas.user import Vehiculos, Concesionarios
 
 user = APIRouter()
-
-class Vehiculo(BaseModel):
-    id: Optional[str] = None
-    marca: str
-    cilindraje: int
-    combustible: str
-    año: int
-
-class Concesionario(BaseModel):
-    id: Optional[str] = None
-    idVehiculo: Optional[str] = None
-    tipo_vehiculo: str
-    tipo_combustible: str
-    estado_vehiculo: str
-
-vehiculos = []
-concesionarios = []
 
 @user.get('/users')
 def get_data():
     return conn.execute(Vehiculo.select()).fetchall()
 
-#Vehiculos
+#Vehiculos model_dump()
 
 @user.post('/vehiculos/')
-def crear_vehiculo(vehiculo: Vehiculo):
-    vehiculo.id = str(uuid4())
-    vehiculos.userend(vehiculo)
-    return {'message' : f'El vehiculo {vehiculo.marca}, con cilindraje {vehiculo.cilindraje} del año {vehiculo.año} y con combustible {vehiculo.combustible} ha sido creado exitosamente'}
+def crear_vehiculo(vehiculo: Vehiculos):
+    nuevo_vehiuclo = {"marca":vehiculo.marca, "cilindraje":vehiculo.cilindraje, "combustible":vehiculo.combustible, "ano":vehiculo.ano}
+    nuevo_vehiuclo["id"] = str(uuid4())
+    result = conn.execute(Vehiculo.insert().values(nuevo_vehiuclo))
+    print(result)
+    return "Vehiculo insertado correctamente"
 
+
+'''
 @user.get('/vehiculos/')
 def obtener_vehiculos():
     return vehiculos
@@ -67,7 +53,7 @@ def eliminar_vehiculo(vehiculo_id: str):
 #Concesionarios
 
 @user.post('/concesionarios/')
-def crear_concesionario(concesionario: Concesionario):
+def crear_concesionario(concesionario: Concesionarios):
     concesionario.id = str(uuid4())
     concesionarios.userend(concesionario)
     return concesionario
@@ -100,3 +86,4 @@ def eliminar_concesionario(concesionario_id: str):
             concesionarios.pop(index)
             return {"message": "Concesionario eliminado exitosamente"}
     raise HTTPException(status_code=404, detail="Concesionario no encontrado")
+'''
