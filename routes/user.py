@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response, status
-from starlette.status import HTTP_204_NO_CONTENT
+from starlette.status import HTTP_204_NO_CONTENT, HTTP_201_CREATED
 from config.db import conn
 from uuid import uuid4
 from models.user import Vehiculo, Concesionario
@@ -11,16 +11,25 @@ user = APIRouter()
 def obtener_vehiculos():
     return conn.execute(Vehiculo.select()).fetchall()
 
-#Vehiculos model_dump()
+#Vehiculos model_dump() para volverlo un diccionario
 
 @user.post('/vehiculos/', response_model=Vehiculos, tags=['Vehiculos'])
+def crear_vehiculo(vehiculo: Vehiculos):
+    nuevo_vehiculo = vehiculo.model_dump()
+    nuevo_vehiculo["id"] = str(uuid4())
+    xd = conn.execute(Vehiculo.insert().values(nuevo_vehiculo))
+    print(xd)
+    return conn.execute(Vehiculo.select().where(Vehiculo.c.id == xd.lastrowid)).first()
+    #return Response(status_code=HTTP_201_CREATED)
+
+'''@user.post('/vehiculos/', response_model=Vehiculos, tags=['Vehiculos'])
 def crear_vehiculo(vehiculo: Vehiculos):
     nuevo_vehiculo = {"marca":vehiculo.marca, "cilindraje":vehiculo.cilindraje, "combustible":vehiculo.combustible, "ano":vehiculo.ano}
     nuevo_vehiculo["id"] = str(uuid4())
     result = conn.execute(Vehiculo.insert().values(nuevo_vehiculo))
     print(result)
     #return conn.execute(Vehiculo.select().where(Vehiculo.c.id == result.lastrowid)).first()
-    return "Vehiculo insertado correctamente"
+    return "Vehiculo insertado correctamente"'''
 
 @user.get('/vehiculos/{vehiculo_id}', response_model=Vehiculos, tags=['Vehiculos'])
 def obtener_vehiculo(vehiculo_id: str):
