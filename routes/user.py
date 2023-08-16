@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response
 from starlette.status import HTTP_204_NO_CONTENT, HTTP_201_CREATED
-from config.db import conn
+from config.db import engine
 from uuid import uuid4
 from models.user import Vehiculo, Concesionario
 from schemas.user import Vehiculos, Concesionarios
@@ -9,78 +9,74 @@ user = APIRouter()
 
 @user.get('/users', response_model=list[Vehiculos], tags=['Vehiculos'])
 def obtener_vehiculos():
-    return conn.execute(Vehiculo.select()).fetchall()
+    with engine.connect() as conn:
+        return conn.execute(Vehiculo.select()).fetchall()
 
 #Vehiculos model_dump() para volverlo un diccionario
 
-@user.post('/vehiculos/', response_model=Vehiculos, tags=['Vehiculos'])
+@user.post('/vehiculos/', response_model=list[Vehiculos], tags=['Vehiculos'])
 def crear_vehiculo(vehiculo: Vehiculos):
-    nuevo_vehiculo = vehiculo.model_dump()
-    nuevo_vehiculo["id"] = str(uuid4())
-    xd = conn.execute(Vehiculo.insert().values(nuevo_vehiculo))
-    print(xd)
-    return conn.execute(Vehiculo.select().where(Vehiculo.c.id == xd.lastrowid)).first()
-    #return Response(status_code=HTTP_201_CREATED)
+    with engine.connect() as conn:
+        nuevo_vehiculo = vehiculo.model_dump()
+        nuevo_vehiculo["id"] = str(uuid4())
+        xd = conn.execute(Vehiculo.insert().values(nuevo_vehiculo))
+        return conn.execute(Vehiculo.select().where(Vehiculo.c.id == xd.lastrowid)).first()
+        #return Response(status_code=HTTP_201_CREATED)
 
-'''@user.post('/vehiculos/', response_model=Vehiculos, tags=['Vehiculos'])
-def crear_vehiculo(vehiculo: Vehiculos):
-    nuevo_vehiculo = {"marca":vehiculo.marca, "cilindraje":vehiculo.cilindraje, "combustible":vehiculo.combustible, "ano":vehiculo.ano}
-    nuevo_vehiculo["id"] = str(uuid4())
-    result = conn.execute(Vehiculo.insert().values(nuevo_vehiculo))
-    print(result)
-    #return conn.execute(Vehiculo.select().where(Vehiculo.c.id == result.lastrowid)).first()
-    return "Vehiculo insertado correctamente"'''
-
-@user.get('/vehiculos/{vehiculo_id}', response_model=Vehiculos, tags=['Vehiculos'])
+@user.get('/vehiculos/{vehiculo_id}', response_model=list[Vehiculos], tags=['Vehiculos'])
 def obtener_vehiculo(vehiculo_id: str):
-    return conn.execute(Vehiculo.select().where(Vehiculo.c.id == vehiculo_id)).first()
+    with engine.connect() as conn:
+        return conn.execute(Vehiculo.select().where(Vehiculo.c.id == vehiculo_id)).first()
 
-@user.delete('/vehiculos/{vehiculo_id}', status_code=status.HTTP_204_NO_CONTENT, tags=['Vehiculos'])
+@user.delete('/vehiculos/{vehiculo_id}', response_model=list[Vehiculos], tags=['Vehiculos'])
 def eliminar_vehiculo(vehiculo_id: str):
-    conn.execute(Vehiculo.delete().where(Vehiculo.c.id == vehiculo_id))
-    return Response(status_code=HTTP_204_NO_CONTENT)
+    with engine.connect() as conn:
+        conn.execute(Vehiculo.delete().where(Vehiculo.c.id == vehiculo_id))
+        return Response(status_code=HTTP_204_NO_CONTENT)
 
-@user.put('/vehiculos/{vehiculo_id}', response_model=Vehiculos, tags=['Vehiculos'])
+@user.put('/vehiculos/{vehiculo_id}', response_model=list[Vehiculos], tags=['Vehiculos'])
 def actualizar_vehiculo(vehiculo_id: str, vehiculo: Vehiculos):
-    conn.execute(Vehiculo.update().values(marca = vehiculo.marca, cilindraje = vehiculo.cilindraje, 
-                                          combustible = vehiculo.combustible, 
-                                          ano = vehiculo.ano).where(Vehiculo.c.id == vehiculo_id))
-    return conn.execute(Vehiculo.select().where(Vehiculo.c.id == vehiculo_id)).first()
+    with engine.connect() as conn:
+        conn.execute(Vehiculo.update().values(marca = vehiculo.marca, 
+                                            cilindraje = vehiculo.cilindraje, 
+                                            combustible = vehiculo.combustible, 
+                                            ano = vehiculo.ano).where(Vehiculo.c.id == vehiculo_id))
+        return conn.execute(Vehiculo.select().where(Vehiculo.c.id == vehiculo_id)).first()
 
-'''
 #Concesionarios
 
 @user.get('/concesionarios/', response_model=list[Concesionarios], tags=['Concesionarios'])
 def obtener_concesionarios():
-    return concesionarios
+    with engine.connect() as conn:
+        return conn.execute(Concesionario.select()).fetchall()
 
 @user.post('/concesionarios/', response_model=list[Concesionarios], tags=['Concesionarios'])
 def crear_concesionario(concesionario: Concesionarios):
-    concesionario.id = str(uuid4())
-    concesionarios.userend(concesionario)
-    return concesionario
+    with engine.connect() as conn:
+        nuevo_concesionario = concesionario.model_dump()
+        nuevo_concesionario["id"] = str(uuid4())
+        xd = conn.execute(Concesionario.insert().values(nuevo_concesionario))
+        return conn.execute(Concesionario.select().where(Concesionario.c.id == xd.lastrowid)).first()
+        #return Response(status_code=HTTP_201_CREATED)
 
 @user.get('/concesionarios/{concesionario_id}', response_model=list[Concesionarios], tags=['Concesionarios'])
 def obtener_concesionario(concesionario_id: str):
-    for concesionario in concesionarios:
-        if concesionario.id == concesionario_id:
-            return concesionario
-    raise HTTPException(status_code=404, detail="Concesionario no encontrado")
-
-@user.put('/concesionarios/{concesionario_id}', response_model=list[Concesionarios], tags=['Concesionarios'])
-def actualizar_concesionario(concesionario_id: str, concesionario_actualizado: Concesionario):
-    for index, concesionario in enumerate(concesionarios):
-        if concesionario.id == concesionario_id:
-            concesionarios[index] = concesionario_actualizado
-            concesionarios[index].id = concesionario_id
-            return {"message": "Concesionario actualizado exitosamente"}
-    raise HTTPException(status_code=404, detail="Concesionario no encontrado")
+    with engine.connect() as conn:
+        return conn.execute(Concesionario.select().where(Concesionario.c.id == concesionario_id)).first()
 
 @user.delete('/concesionarios/{concesionario_id}', response_model=list[Concesionarios], tags=['Concesionarios'])
 def eliminar_concesionario(concesionario_id: str):
-    for index, concesionario in enumerate(concesionarios):
-        if concesionario.id == concesionario_id:
-            concesionarios.pop(index)
-            return {"message": "Concesionario eliminado exitosamente"}
-    raise HTTPException(status_code=404, detail="Concesionario no encontrado")
+    with engine.connect() as conn:
+        conn.execute(Concesionario.delete().where(Concesionario.c.id == concesionario_id))
+        return Response(status_code=HTTP_204_NO_CONTENT)
+
+'''
+@user.put('/concesionarios/{concesionario_id}', tags=['Concesionarios'])
+def actualizar_concesionario(concesionario_id: str, concesionario: Concesionario):
+    with engine.connect() as conn:
+        conn.execute(Concesionario.update().values(idVehiculo = concesionario.idVehiculo, 
+                                                tipo_vehiculo = concesionario.tipo_vehiculo,
+                                                tipo_combustible = concesionario.tipo_combustible, 
+                                                estado_vehiculo = concesionario.estado_vehiculo)).where(Concesionario.c.id == concesionario_id)
+        return conn.execute(Concesionario.select().where(Concesionario.c.id == concesionario_id)).first()
 '''
