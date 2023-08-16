@@ -15,10 +15,10 @@ def obtener_vehiculos():
 
 @user.post('/vehiculos/', response_model=Vehiculos, tags=['Vehiculos'])
 def crear_vehiculo(vehiculo: Vehiculos):
-    nuevo_vehiuclo = {"marca":vehiculo.marca, "cilindraje":vehiculo.cilindraje, "combustible":vehiculo.combustible, "ano":vehiculo.ano}
-    nuevo_vehiuclo["id"] = str(uuid4())
-    result = conn.execute(Vehiculo.insert().values(nuevo_vehiuclo))
-    print(result.lastrowid)
+    nuevo_vehiculo = {"marca":vehiculo.marca, "cilindraje":vehiculo.cilindraje, "combustible":vehiculo.combustible, "ano":vehiculo.ano}
+    nuevo_vehiculo["id"] = str(uuid4())
+    result = conn.execute(Vehiculo.insert().values(nuevo_vehiculo))
+    print(result)
     #return conn.execute(Vehiculo.select().where(Vehiculo.c.id == result.lastrowid)).first()
     return "Vehiculo insertado correctamente"
 
@@ -41,25 +41,24 @@ def actualizar_vehiculo(vehiculo_id: str, vehiculo: Vehiculos):
 '''
 #Concesionarios
 
-@user.post('/concesionarios/')
+@user.get('/concesionarios/', response_model=list[Concesionarios], tags=['Concesionarios'])
+def obtener_concesionarios():
+    return concesionarios
+
+@user.post('/concesionarios/', response_model=list[Concesionarios], tags=['Concesionarios'])
 def crear_concesionario(concesionario: Concesionarios):
     concesionario.id = str(uuid4())
     concesionarios.userend(concesionario)
     return concesionario
 
-
-@user.get('/concesionarios/')
-def obtener_concesionarios():
-    return concesionarios
-
-@user.get('/concesionarios/{concesionario_id}')
+@user.get('/concesionarios/{concesionario_id}', response_model=list[Concesionarios], tags=['Concesionarios'])
 def obtener_concesionario(concesionario_id: str):
     for concesionario in concesionarios:
         if concesionario.id == concesionario_id:
             return concesionario
     raise HTTPException(status_code=404, detail="Concesionario no encontrado")
 
-@user.put('/concesionarios/{concesionario_id}')
+@user.put('/concesionarios/{concesionario_id}', response_model=list[Concesionarios], tags=['Concesionarios'])
 def actualizar_concesionario(concesionario_id: str, concesionario_actualizado: Concesionario):
     for index, concesionario in enumerate(concesionarios):
         if concesionario.id == concesionario_id:
@@ -68,7 +67,7 @@ def actualizar_concesionario(concesionario_id: str, concesionario_actualizado: C
             return {"message": "Concesionario actualizado exitosamente"}
     raise HTTPException(status_code=404, detail="Concesionario no encontrado")
 
-@user.delete('/concesionarios/{concesionario_id}')
+@user.delete('/concesionarios/{concesionario_id}', response_model=list[Concesionarios], tags=['Concesionarios'])
 def eliminar_concesionario(concesionario_id: str):
     for index, concesionario in enumerate(concesionarios):
         if concesionario.id == concesionario_id:
